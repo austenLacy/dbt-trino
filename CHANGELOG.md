@@ -1,10 +1,53 @@
 ## dbt-trino TBD (TBD)
 
 ### Features
+
+### Fixes
+- Fix `TrinoKerberosCredentials.trino_auth()` for kerberos authentication ([#78](https://github.com/starburstdata/dbt-trino/pull/78))
+### Under the hood
+
+Contributors:
+* [@vivianhsu0214](https://github.com/vivianhsu0214) ([#78](https://github.com/starburstdata/dbt-trino/pull/78))
+
+## dbt-trino 1.1.1 (June 20, 2022)
+
+### Fixes
+- Enable setting session properties per dbt model when `session_properties` is not defined in the dbt profile ([#71](https://github.com/starburstdata/dbt-trino/pull/71))
+- Support impersonation with JWT, certificate and OAuth authentication ([#73](https://github.com/starburstdata/dbt-trino/issues/73), [#74](https://github.com/starburstdata/dbt-trino/pull/74))
+
+Contributors:
+* [@findinpath](https://github.com/findinpath) ([#71](https://github.com/starburstdata/dbt-trino/pull/71))
+* [@mdesmet](https://github.com/mdesmet) ([#74](https://github.com/starburstdata/dbt-trino/pull/74))
+
+## dbt-trino 1.1.0 (May 9, 2022)
+
+### Features
+- Add support for `on_table_exists` in table materialization ([#26](https://github.com/starburstdata/dbt-trino/issues/26), [#54](https://github.com/starburstdata/dbt-trino/pull/54))
+- Adds support for OAuth2 authentication using web browser ([#40](https://github.com/starburstdata/dbt-trino/issues/40), [#41](https://github.com/starburstdata/dbt-trino/pull/41))
+- Add `view_security` to define security mode for views ([#65](https://github.com/starburstdata/dbt-trino/pull/65))
+- Support for dbt source freshness ([#28](https://github.com/starburstdata/dbt-trino/issues/28), [#61](https://github.com/starburstdata/dbt-trino/pull/61))
+
+### Fixes
+- Add support for future versions of dbt-core ([#55](https://github.com/starburstdata/dbt-trino/issues/55), [#65](https://github.com/starburstdata/dbt-trino/pull/65))
+
+### Under the hood
+- Add PostgreSQL docker container for testing ([#66](https://github.com/starburstdata/dbt-trino/issues/66), [#67](https://github.com/starburstdata/dbt-trino/pull/67))
+- Migrate to new adapter testing framework ([#57](https://github.com/starburstdata/dbt-trino/issues/57), [#65](https://github.com/starburstdata/dbt-trino/pull/65))
+- Implement trino-python-client's prepared statements using `experimental_python_types` ([#61](https://github.com/starburstdata/dbt-trino/pull/61))
+  
+Contributors:
+* [@hovaesco](https://github.com/hovaesco) ([#54](https://github.com/starburstdata/dbt-trino/pull/54), [#65](https://github.com/starburstdata/dbt-trino/pull/65), [#67](https://github.com/starburstdata/dbt-trino/pull/67))
+* [@smith-m](https://github.com/smith-m) ([#65](https://github.com/starburstdata/dbt-trino/pull/65))
+* [@mdesmet](https://github.com/mdesmet) ([#41](https://github.com/starburstdata/dbt-trino/pull/41), [#61](https://github.com/starburstdata/dbt-trino/pull/61))
+
+## dbt-trino 1.0.3 (March 2, 2022)
+
+### Features
 - Adds support for Trino certificate authentication ([#45](https://github.com/starburstdata/dbt-trino/pull/45))
 
 ### Fixes
 - Supporting custom schemas in incremental models ([#17](https://github.com/starburstdata/dbt-trino/issues/17), [#39](https://github.com/starburstdata/dbt-trino/pull/39))
+- Supporting column type overrides in seeds ([#42](https://github.com/starburstdata/dbt-trino/issues/42)), ([#44](https://github.com/starburstdata/dbt-trino/pull/44))
 
 ### Under the hood
 - Add missing tests to Makefile ([#43](https://github.com/starburstdata/dbt-trino/pull/43))
@@ -14,6 +57,7 @@ Contributors:
 * [@hovaesco](https://github.com/hovaesco) ([#43](https://github.com/starburstdata/dbt-trino/pull/43), [#47](https://github.com/starburstdata/dbt-trino/pull/47))
 * [@austenLacy](https://github.com/austenLacy) ([#45](https://github.com/starburstdata/dbt-trino/pull/45))
 * [@rahulj51](https://github.com/rahulj51) ([#39](https://github.com/starburstdata/dbt-trino/pull/39))
+* [@mdesmet](https://github.com/mdesmet) ([#44](https://github.com/starburstdata/dbt-trino/pull/44))
 
 ## dbt-trino 1.0.1 (January 24, 2022)
 

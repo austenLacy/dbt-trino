@@ -103,8 +103,15 @@
 
 
 {% macro trino__create_view_as(relation, sql) -%}
+  {%- set view_security = config.get('view_security', 'definer') -%}
+  {%- if view_security not in ['definer', 'invoker'] -%}
+      {%- set log_message = 'Invalid value for view_security (%s) specified. Setting default value (%s).' % (view_security, 'definer') -%}
+      {% do log(log_message) %}
+      {%- set on_table_exists = 'definer' -%}
+  {% endif %}
   create or replace view
     {{ relation }}
+  security {{ view_security }}
   as
     {{ sql }}
   ;
@@ -151,11 +158,6 @@
 {% endmacro %}
 
 
-{% macro trino__get_batch_size() %}
-  {{ return(1000) }}
-{% endmacro %}
-
-
 {% macro trino__list_schemas(database) -%}
   {% call statement('list_schemas', fetch_result=True, auto_begin=False) %}
     select distinct schema_name
@@ -178,3 +180,11 @@
 {% macro trino__current_timestamp() -%}
     CURRENT_TIMESTAMP
 {%- endmacro %}
+
+{% macro trino__get_binding_char() %}
+  {%- if target.prepared_statements_enabled|as_bool -%}
+    {{ return('?') }}
+  {%- else -%}
+    {{ return('%s') }}
+  {%- endif -%}
+{% endmacro %}

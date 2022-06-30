@@ -27,7 +27,7 @@ def _dbt_trino_version():
 package_version = _dbt_trino_version()
 description = """The trino adapter plugin for dbt (data build tool)"""
 
-dbt_version = "1.0.1"
+dbt_version = "1.1.1"
 # the package version should be the dbt version, with maybe some things on the
 # ends of it. (0.19.1 vs 0.19.1a1, 0.19.1.1, ...)
 if not package_version.startswith(dbt_version):
@@ -55,10 +55,11 @@ setup(
             "include/trino/sample_profiles.yml",
             "include/trino/macros/*.sql",
             "include/trino/macros/*/*.sql",
+            "include/trino/macros/*/*/*.sql",
         ]
     },
     install_requires=[
-        "dbt-core=={}".format(dbt_version),
-        "trino==0.310.0",
+        "dbt-core~={}".format(dbt_version),
+        "trino==0.313.0",
     ],
 )
