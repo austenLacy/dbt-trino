@@ -12,14 +12,31 @@ on:
       - "**/*.md"
 
 jobs:
+  checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: "Checkout the source code"
+        uses: actions/checkout@v2
+
+      - name: "Install Python"
+        uses: actions/setup-python@v2
+
+      - name: "Install dev requirements"
+        run: pip install -r dev_requirements.txt
+
+      - name: "Run pre-commit checks"
+        run: pre-commit run --all-files
   test:
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        type:
+        engine:
           - "trino"
           - "starburst"
+        python:
+          - "3.9"
+          - "3.10"
 
     steps:
       - name: Checkout
@@ -28,11 +45,11 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v2
         with:
-          python-version: "3.9.5"
+          python-version: ${{ matrix.python }}
 
-      - name: Run dbt-trino tests against ${{ matrix.type }}
-        run: make dbt-${{ matrix.type }}-tests
+      - name: Run dbt-trino tests against ${{ matrix.engine }} on python ${{ matrix.python }}
+        run: make dbt-${{ matrix.engine }}-tests
 
       - name: Remove container on failure
         if: failure()
-        run: ./docker/remove_${{ matrix.type }}.bash || true
+        run: ./docker/remove_${{ matrix.engine }}.bash || true

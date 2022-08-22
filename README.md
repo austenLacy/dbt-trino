@@ -39,8 +39,8 @@ $ pip install dbt-trino
 
 A dbt profile can be configured to run against Trino using the following configuration:
 
-| Option                         | Description                                                                                                  | Required?                                                                                               | Example                          |
-|--------------------------------|--------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------|----------------------------------|
+| Option                         | Description                                                                                                  | Required?                                                                                                        | Example                          |
+|--------------------------------|--------------------------------------------------------------------------------------------------------------|------------------------------------------------------------------------------------------------------------------|----------------------------------|
 | method                         | The Trino authentication method to use                                                                       | Optional (default is `none`, supported methods are `ldap`, `kerberos`, `jwt`, `oauth` or `certificate`)          | `none` or `kerberos`             |
 | user                           | Username for authentication                                                                                  | Optional (required if `method` is `none`, `ldap` or `kerberos`)                                                  | `commander`                      |
 | password                       | Password for authentication                                                                                  | Optional (required if `method` is `ldap`)                                                                        | `none` or `abc123`               |
@@ -61,7 +61,7 @@ A dbt profile can be configured to run against Trino using the following configu
 | port                           | The port to connect to the host on                                                                           | Required                                                                                                         | `8080`                           |
 | threads                        | How many threads dbt should use                                                                              | Optional (default is `1`)                                                                                        | `8`                              |
 | prepared_statements_enabled    | Enable usage of Trino prepared statements (used in `dbt seed` commands)                                      | Optional (default is `true`)                                                                                     | `true` or `false`                |
-
+| retries                        | Configure how many times a database operation is retried when connection issues arise                        | Optional (default is `3`)                                                                                        | `10`                             |
 
 **Example profiles.yml entry:**
 
@@ -161,13 +161,52 @@ may come to the rescue:
 
 #### Incremental models
 
-The incremental strategy currently supported by this adapter is to append new records
-without updating/overwriting any existing data from the target model.
+Using an incremental model limits the amount of data that needs to be transformed, vastly reducing the runtime of your transformations. This improves performance and reduces compute costs.
 
 ```jinja2
 {{
-    config(materialized = 'incremental')
+    config(
+      materialized = 'incremental', 
+      unique_key='<optional>',
+      incremental_strategy='<optional>',)
 }}
+select * from {{ ref('events') }}
+{% if is_incremental() %}
+  where event_ts > (select max(event_ts) from {{ this }})
+{% endif %}
+```
+
+##### `append` (default)
+
+The default incremental strategy is `append`. `append` only adds the new records based on the condition specified in the `is_incremental()` conditional block.
+
+```jinja2
+{{
+    config(
+      materialized = 'incremental')
+}}
+select * from {{ ref('events') }}
+{% if is_incremental() %}
+  where event_ts > (select max(event_ts) from {{ this }})
+{% endif %}
+```
+
+##### `delete+insert`
+
+Through the `delete+insert` incremental strategy, you can instruct dbt to use a two-step incremental approach. It will first delete the records detected through the configured `is_incremental()` block and re-insert them.
+
+```jinja2
+{{
+    config(
+      materialized = 'incremental',
+      unique_key='user_id',
+      incremental_strategy='delete+insert',
+      )
+}}
+select * from {{ ref('users') }}
+{% if is_incremental() %}
+  where updated_ts > (select max(updated_ts) from {{ this }})
+{% endif %}
 ```
 
 #### Incremental overwrite on hive models
@@ -317,6 +356,12 @@ In order to override default value define within your project a macro like the f
 {% endmacro %}
 ```
 
+#### Persist docs
+
+Persist docs optionally persist resource descriptions as column and relation comments in the database. By default, documentation persistence is disabled, but it can be enabled for specific resources or groups of resources as needed.
+
+Column-level comments are not supported in Trino views. Detailed documentation can be found [here](https://docs.getdbt.com/reference/resource-configs/persist_docs).
+
 #### Generating lineage flow in docs
 
 In order to generate lineage flow in docs use `ref` function in the place of table names in the query. It builts dependencies between models and allows to create DAG with data flow. Refer to examples [here](https://docs.getdbt.com/docs/building-a-dbt-project/building-models#building-dependencies-between-models).
@@ -343,77 +388,18 @@ When executing a prepared statement with a large number of parameters, you might
 
 The prepared statements can be disabled by setting `prepared_statements_enabled` to `true` in your dbt profile (reverting back to the legacy behavior using Python string interpolation). This flag may be removed in later releases.
 
-## Development
+## Contributing
 
-### Running tests
-
-Tests can be executed against Trino or Starburst server. Docker compose creates PostgreSQL instance which can be used in tests by pointing to `postgresql` catalog.
-To run all tests alongside with building required docker images and server initialization run:
-
-```sh
-make dbt-trino-tests
-make dbt-starburst-tests
-```
-
-Build dbt container locally:
-
-```sh
-./docker/dbt/build.sh
-```
-
-Run Trino or Starburst server locally:
-
-```sh
-./docker/init_trino.bash
-./docker/init_starburst.bash
-```
-
-Run tests against Trino or Starburst:
-
-```sh
-./docker/run_tests.bash
-```
-
-Run the locally-built docker image (from docker/dbt/build.sh):
-
-```sh
-export DBT_PROJECT_DIR=$HOME/... # wherever the dbt project you want to run is
-docker run -it --mount "type=bind,source=$HOME/.dbt/,target=/root/.dbt" --mount="type=bind,source=$DBT_PROJECT_DIR,target=/usr/app" --network dbt-net dbt-trino /bin/bash
-```
-
-### Running integration tests
-
-Install the libraries required for development in order to be able to run the dbt tests:
-
-```sh
-pip install -r dev_requirements.txt
-```
-
-Run from the base directory of the project the command:
-
-```sh
-tox -r
-```
-
-or
-
-```sh
-pytest tests/functional
-```
+- Want to report a bug or request a feature? Let us know on [Slack](http://community.getdbt.com/) in the #db-presto-trino channel, or open [an issue](https://github.com/starburstdata/dbt-trino/issues/new)
+- Want to help us build dbt-trino? Check out the [Contributing Guide](https://github.com/starburstdata/dbt-trino/blob/HEAD/CONTRIBUTING.md)
 
 ### Release process
 
-Before doing a release dbt's version requires updating.
-In order to bump dbt-trino and dbt-core version run:
+Before doing a release, it is required to bump the dbt-trino version by triggering release workflow `version-bump.yml`. The major and minor part of the dbt version are used to associate dbt-trino's version with the dbt version.
 
-```sh
-bumpversion --config-file .bumpversion-dbt.cfg patch --new-version <new-version>
-bumpversion --config-file .bumpversion.cfg patch --new-version <new-version> --allow-dirty
-```
+Next step is to merge the bump PR and making sure that test suite pass.
 
-Next step is to merge bump commit and making sure that test suite pass.
-
-Finally to release `dbt-trino` to PyPi and GitHub trigger release workflow `release.yml`.
+Finally, to release `dbt-trino` to PyPi and GitHub trigger release workflow `release.yml`.
 
 ## Code of Conduct
 

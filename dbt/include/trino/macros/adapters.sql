@@ -158,6 +158,24 @@
 {% endmacro %}
 
 
+{% macro trino__alter_relation_comment(relation, relation_comment) -%}
+  comment on {{ relation.type }} {{ relation }} is '{{ relation_comment | replace("'", "''") }}';
+{% endmacro %}
+
+
+{% macro trino__alter_column_comment(relation, column_dict) %}
+  {% set existing_columns = adapter.get_columns_in_relation(relation) | map(attribute="name") | list %}
+  {% for column_name in column_dict if (column_name in existing_columns) %}
+    {% set comment = column_dict[column_name]['description'] %}
+    {%- if comment|length -%}
+      comment on column {{ relation }}.{{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} is '{{ comment | replace("'", "''") }}';
+    {%- else -%}
+      comment on column {{ relation }}.{{ adapter.quote(column_name) if column_dict[column_name]['quote'] else column_name }} is null;
+    {%- endif -%}
+  {% endfor %}
+{% endmacro %}
+
+
 {% macro trino__list_schemas(database) -%}
   {% call statement('list_schemas', fetch_result=True, auto_begin=False) %}
     select distinct schema_name
@@ -176,10 +194,6 @@
   {%- endcall %}
   {{ return(load_result('check_schema_exists').table) }}
 {% endmacro %}
-
-{% macro trino__current_timestamp() -%}
-    CURRENT_TIMESTAMP
-{%- endmacro %}
 
 {% macro trino__get_binding_char() %}
   {%- if target.prepared_statements_enabled|as_bool -%}
