@@ -9,7 +9,7 @@ isort
 mypy==0.971
 pre-commit
 pytest
-pytest-xdist>=2.1.0,<3
+pytest-xdist>=2.1.0,<4
 pytz
 tox==3.25.1
 twine
