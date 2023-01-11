@@ -11,6 +11,6 @@ pre-commit
 pytest
 pytest-xdist>=2.1.0,<3
 pytz
-tox==3.25.1
+tox==4.2.7
 twine
 wheel
